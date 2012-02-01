@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 The Android Open Source Project
+. * Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,31 @@
 
 package com.android.music;
 
-import com.android.music.MusicUtils.ServiceToken;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.KeyguardManager;
 import android.app.SearchManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.ResolveInfo;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.media.audiofx.AudioEffect;
 import android.media.AudioManager;
+import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,20 +54,26 @@ import android.text.Layout;
 import android.text.TextUtils.TruncateAt;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.view.ViewConfiguration;
 import android.view.Window;
+import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.SeekBar.OnSeekBarChangeListener;
+
+import com.android.music.MusicUtils.ServiceToken;
 
 
 public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
@@ -82,12 +92,20 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private ImageButton mRepeatButton;
     private ImageButton mShuffleButton;
     private ImageButton mQueueButton;
+    private Button mSleepModeButton;
     private Worker mAlbumArtWorker;
     private AlbumArtHandler mAlbumArtHandler;
     private Toast mToast;
     private int mTouchSlop;
     private ServiceToken mToken;
 
+
+    private long mSleepTime;
+    private boolean mSleepModeBool;
+    private final static String PREFS_NAME = "MediaPlaybackActivity";
+    private final static String SLEEP_MODE_BOOL_PREFS ="SleepModeBool";
+    private final static String SLEEP_TIME_PREFS ="SleepTime";
+    
     public MediaPlaybackActivity()
     {
     }
@@ -97,6 +115,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     public void onCreate(Bundle icicle)
     {
         super.onCreate(icicle);
+        Log.v("MediaPlaybackActivity", "create");
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         mAlbumArtWorker = new Worker("album art worker");
@@ -145,7 +164,9 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         mShuffleButton.setOnClickListener(mShuffleListener);
         mRepeatButton = ((ImageButton) findViewById(R.id.repeat));
         mRepeatButton.setOnClickListener(mRepeatListener);
-        
+        mSleepModeButton = ((Button) findViewById(R.id.sleepmode));
+        mSleepModeButton.setOnClickListener(mSleepModeListener);
+        mSleepModeButton.setOnLongClickListener(mSleepModeLongClickListener);
         if (mProgress instanceof SeekBar) {
             SeekBar seeker = (SeekBar) mProgress;
             seeker.setOnSeekBarChangeListener(mSeekListener);
@@ -153,6 +174,16 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         mProgress.setMax(1000);
 
         mTouchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+        
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        mSleepTime = settings.getLong(SLEEP_TIME_PREFS, -1);
+        mSleepModeBool = settings.getBoolean(SLEEP_MODE_BOOL_PREFS, true);
+        if(mSleepTime>0){
+        	mSleepModeButton.setLongClickable(true);
+        }else{
+        	mSleepModeButton.setLongClickable(false);
+        }
+        
     }
     
     int mInitialX = -1;
@@ -412,6 +443,19 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             cycleRepeat();
         }
     };
+    
+    private View.OnClickListener mSleepModeListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            toggleSleepMode(false);
+        }
+    };
+    private OnLongClickListener mSleepModeLongClickListener = new OnLongClickListener() {
+		public boolean onLongClick(View v) {
+			toggleSleepMode(true);
+			return true;
+		}
+	};
+   
 
     private View.OnClickListener mPauseListener = new View.OnClickListener() {
         public void onClick(View v) {
@@ -462,6 +506,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     public void onStop() {
         paused = true;
         mHandler.removeMessages(REFRESH);
+        mHandler.removeMessages(REFRESH_SLEEP_TIME_REMAIN);
         unregisterReceiver(mStatusListener);
         MusicUtils.unbindFromService(mToken);
         mService = null;
@@ -966,6 +1011,43 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         }
     }
     
+    private void toggleSleepMode(boolean longClick){
+        Log.v("Media", "toggleSleepMode");
+        if (mService == null) {
+            return;
+        }
+        try{
+            if(mService.isInSleepMode()){
+                mHandler.removeMessages(REFRESH_SLEEP_TIME_REMAIN);
+                mService.inactivateSleepMode();
+                mHandler.sendEmptyMessage(REFRESH_SLEEP_TIME_REMAIN);
+                showToast(R.string.sleep_mode_inactive);
+            }else{
+            	if(longClick){
+            		activeSleepMode(true);
+            	}else{
+            		showDialog(SLEEPMODE_DIALOG_ID);
+            	}
+            }	
+        }catch (RemoteException ex){
+            
+        }
+    }
+    //Call by SleepMode Dialog
+    private void activeSleepMode(boolean showToast) {
+        mHandler.sendEmptyMessage(REFRESH_SLEEP_TIME_REMAIN);
+        try{
+        	
+            mService.activateSleepMode(mSleepTime,mSleepModeBool);
+            if(showToast){
+            	showToast(R.string.sleep_mode_active);
+            }
+        }catch (RemoteException ex){
+                
+        }
+    }
+
+    
     private void toggleShuffle() {
         if (mService == null) {
             return;
@@ -1072,6 +1154,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                         setRepeatButtonImage();
                         setShuffleButtonImage();
                         setPauseButtonImage();
+                        setSleepModeButtonImage();
                         return;
                     }
                 } catch (RemoteException ex) {
@@ -1139,6 +1222,24 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         }
     }
     
+    private void setSleepModeButtonImage() {
+         if (mService == null) return;
+        try {
+            if(mService.isInSleepMode()){
+                long t = mService.getSleepModeRemainingTime();
+                //XXX	
+                mSleepModeButton.setShadowLayer(3, 0, 0, 0xFF86c000);
+                mSleepModeButton.setText(""+((t/1000)+30)/60);
+               
+            }else{
+            	mSleepModeButton.setShadowLayer(0, 0, 0, 0x0);
+                mSleepModeButton.setText("Zzz");
+                
+            }
+        } catch (RemoteException ex) {
+        }
+    }
+    
     private ImageView mAlbum;
     private TextView mCurrentTime;
     private TextView mTotalTime;
@@ -1156,7 +1257,33 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private static final int QUIT = 2;
     private static final int GET_ALBUM_ART = 3;
     private static final int ALBUM_ART_DECODED = 4;
-
+    private static final int REFRESH_SLEEP_TIME_REMAIN = 5;
+    
+    private void refreshSleepTimeRemain(){
+        long remain;
+        boolean isInSleepMode =false;
+        try {
+            remain = mService.getSleepModeRemainingTime();
+            isInSleepMode= mService .isInSleepMode();
+            //Toast.makeText(MediaPlaybackActivity.this, ""+remain, 1500).show();
+        } catch (RemoteException ex) {
+            remain = -1; //FIXME
+        }
+        Message msg = mHandler.obtainMessage(REFRESH_SLEEP_TIME_REMAIN);
+        mHandler.removeMessages(REFRESH_SLEEP_TIME_REMAIN);
+        if(isInSleepMode){
+        	if(remain < 60 * 1000){
+        		mHandler.sendMessageDelayed(msg,  remain+1000); 
+        	}else
+            if(remain < 5 * 60 * 1000){
+                mHandler.sendMessageDelayed(msg,  60 * 1000); 
+            }else{
+                mHandler.sendMessageDelayed(msg,  5 * 60 * 1000);
+            }
+        }
+        setSleepModeButtonImage();
+    }
+    
     private void queueNextRefresh(long delay) {
         if (!paused) {
             Message msg = mHandler.obtainMessage(REFRESH);
@@ -1205,7 +1332,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     mAlbum.getDrawable().setDither(true);
                     break;
 
-                case REFRESH:
+                case REFRESH:  //刷新播放进度
                     long next = refreshNow();
                     queueNextRefresh(next);
                     break;
@@ -1225,7 +1352,10 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                             .setCancelable(false)
                             .show();
                     break;
-
+                case REFRESH_SLEEP_TIME_REMAIN:
+                    
+                    refreshSleepTimeRemain();
+                    break;
                 default:
                     break;
             }
@@ -1374,6 +1504,192 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         
         public void quit() {
             mLooper.quit();
+        }
+    }
+
+    
+    private final static int SLEEPMODE_DIALOG_ID = 3;
+    @Override
+    protected Dialog onCreateDialog(int id, Bundle args) {
+        switch(id){
+            case SLEEPMODE_DIALOG_ID:
+                return new SleepModeDialog(this);
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    protected void onPrepareDialog(int id, Dialog dialog, Bundle args) {
+        super.onPrepareDialog(id, dialog, args);
+    }
+    
+    
+    
+    
+    
+    private class SleepModeDialog extends AlertDialog implements OnClickListener{
+        private Object mHourPicker;
+        private Object mMinutPicker;
+        private CheckBox mCheckBox ;
+        
+        private static final String HOUR = "hour";
+        private static final String MINUTE = "minute";
+        
+        private int mHour;
+        private int mMinute;
+        public SleepModeDialog(Context context) {
+            super(context);
+            setButton(context.getText(android.R.string.ok), this); //FIXME
+            setButton2(context.getText(android.R.string.cancel), (OnClickListener) null);
+            setIcon(android.R.drawable.ic_lock_idle_alarm);
+            setTitle(R.string.sleep_mode_dialog_title);
+            //FIXME 横屏的时候不能显示  CheckBox 莫非是bug?
+            LayoutInflater inflater = 
+                    (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View view = inflater.inflate(R.layout.sleep_mode_dialog, null);
+            setView(view);
+            mHourPicker = view.findViewById(R.id.hour);
+            mMinutPicker = view.findViewById(R.id.minute);
+            initNumberPicker();
+            mCheckBox = (CheckBox) view.findViewById(R.id.imme);
+        }
+        
+        private Method mSetCurrentMethod;
+        // sucks 
+        private void initNumberPicker(){
+            try {
+                Class c = mHourPicker.getClass();
+                Method setRange  = c.getMethod("setRange", int.class,int.class);
+                mSetCurrentMethod = c.getMethod("setCurrent", int.class);
+                Method setSpeed = c.getMethod("setSpeed", long.class);
+                System.out.println("initNumberPicker");
+                Class onChangedListener =  null;
+                for(Class s: c.getDeclaredClasses()){
+                    if(s.getSimpleName().equals("OnChangedListener")){
+                        onChangedListener = s;
+                        break;
+                    }
+                }
+                if(onChangedListener==null){
+                    onChangedListener = Class.forName("android.widget.NumberPicker$OnChangedListener");
+                }
+                Method setOnChangeListener =  c.getMethod("setOnChangeListener", onChangedListener);
+                Object proxy = Proxy.newProxyInstance(getClassLoader(), new Class[]{onChangedListener}, new InvocationHandler() {
+
+                    public Object invoke(Object picker, Method m, Object[] args) throws Throwable {
+                        onChanged(args[0], (Integer)args[1], (Integer)args[2]);
+                        return null;
+                    }
+                });
+                
+                setOnChangeListener.invoke(mHourPicker, proxy);
+                setRange.invoke(mHourPicker, 0,9);
+                mSetCurrentMethod.invoke(mHourPicker, mHour);
+                
+                setOnChangeListener.invoke(mMinutPicker, proxy);
+                setRange.invoke(mMinutPicker, 0,59);
+                setSpeed.invoke(mMinutPicker, 100);
+                mSetCurrentMethod.invoke(mMinutPicker, mMinute);
+                
+                
+            } catch (IllegalAccessException ex) {
+                Log.e("NumberPick", ex.getMessage() ,ex);
+            } catch (IllegalArgumentException ex) {
+                Log.e("NumberPick", ex.getMessage() ,ex);
+            } catch (InvocationTargetException ex) {
+                Log.e("NumberPick", ex.getMessage() ,ex);
+            } catch (NoSuchMethodException ex) {
+                Log.e("NumberPick", "NoSuchMethodException" ,ex);
+            } catch (SecurityException ex) {
+                Log.e("NumberPick", "SecurityException" ,ex);
+            } catch (ClassNotFoundException ex){
+                Log.e("NumberPick", "ClassNotFoundException" ,ex);
+            }
+        }
+
+        @Override
+    public Bundle onSaveInstanceState() {
+        Bundle state = super.onSaveInstanceState();
+        state.putInt(HOUR, mHour);
+        state.putInt(MINUTE, mMinute);
+        return state;
+    }
+    
+    private void updateTime(int hour,int minute){
+        try{
+            mSetCurrentMethod.invoke(mHourPicker, hour);
+            mHour = hour;
+            
+            mSetCurrentMethod.invoke(mMinutPicker, minute);
+            mMinute = minute;
+        } catch (IllegalAccessException ex) {
+                Log.e("NumberPick", ex.getMessage() ,ex);
+            } catch (IllegalArgumentException ex) {
+                Log.e("NumberPick", ex.getMessage() ,ex);
+            } catch (InvocationTargetException ex) {
+                Log.e("NumberPick", ex.getMessage() ,ex);
+            }
+    }
+    
+    @Override
+    protected void onStart() {
+    	// TODO Auto-generated method stub
+    	super.onStart();
+    	
+    }
+    
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        System.out.println("Restore");
+        super.onRestoreInstanceState(savedInstanceState);
+        updateTime(savedInstanceState.getInt(HOUR),
+                savedInstanceState.getInt(MINUTE));
+    }
+
+        private void onChanged(Object picker,int oldVal,int newVal){
+            System.out.println("onchage :" +oldVal + " : "+newVal);
+            if(picker == mHourPicker){
+                mHour = newVal;
+            }else if(picker == mMinutPicker){
+                mMinute = newVal;
+            }
+        }
+        
+        public int getHour(){
+            return mHour;
+        }
+        
+        public int getMinute(){
+            return mMinute;
+        }
+        public void onClick(DialogInterface dialog, int which) {
+            long time = (getHour()*60 + getMinute())*60*1000;
+            boolean imme = mCheckBox.isChecked();
+            if(time>0){
+            	if(mSleepTime != time || imme != mSleepModeBool){
+            		
+            		SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+	            	SharedPreferences.Editor editor = settings.edit();
+	            	editor.putLong(SLEEP_TIME_PREFS, time);
+	            	editor.putBoolean(SLEEP_MODE_BOOL_PREFS, imme);
+	            	editor.commit();
+	            	if(mSleepTime == -1){ //first load
+	            		showToast(R.string.sleep_mode_long_press_hint);
+	            		mSleepTime =time;
+			            mSleepModeBool = imme;
+			            mSleepModeButton.setLongClickable(true);
+			            activeSleepMode(false);
+	            	}else{
+		            	mSleepTime =time;
+			            mSleepModeBool = imme;
+		            	activeSleepMode(true);
+	            	}
+	            }else
+	            {
+	                activeSleepMode(true);
+	            }
+            }
         }
     }
 }

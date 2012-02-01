@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sleep_mode_long_press_hint">Long press the Button could active Sleep Mode with current time.</string>
+    <string name="sleep_mode_active">sleep mode activate</string>
+    <string name="sleep_mode_inactive">sleep mode inactive</string>
+    <string name="sleep_mode_dialog_title">Sleep Mode</string>
+    <string name="sleep_mode_checkbox_label">Wait for the current song to end?</string>
+    
+</resources>

@@ -37,11 +37,7 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.PowerManager;
-import android.os.SystemClock;
+import android.os.*;
 import android.os.PowerManager.WakeLock;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -100,8 +96,11 @@ public class MediaPlaybackService extends Service {
     private static final int FOCUSCHANGE = 4;
     private static final int FADEDOWN = 5;
     private static final int FADEUP = 6;
+    private static final int SLEEP_TIME = 7;
+    
     private static final int MAX_HISTORY_SIZE = 100;
     
+    private SleepMode mSleepMode;
     private MultiPlayer mPlayer;
     private String mFileToPlay;
     private int mShuffleMode = SHUFFLE_NONE;
@@ -152,6 +151,7 @@ public class MediaPlaybackService extends Service {
     // interval after which we stop the service when idle
     private static final int IDLE_DELAY = 60000;
     
+    // 这个是UI线程中的Handler
     private Handler mMediaplayerHandler = new Handler() {
         float mCurrentVolume = 1.0f;
         @Override
@@ -159,6 +159,7 @@ public class MediaPlaybackService extends Service {
             MusicUtils.debugLog("mMediaplayerHandler.handleMessage " + msg.what);
             switch (msg.what) {
                 case FADEDOWN:
+                    Log.v(LOGTAG, "FADEDOWN");
                     mCurrentVolume -= .05f;
                     if (mCurrentVolume > .2f) {
                         mMediaplayerHandler.sendEmptyMessageDelayed(FADEDOWN, 10);
@@ -168,6 +169,7 @@ public class MediaPlaybackService extends Service {
                     mPlayer.setVolume(mCurrentVolume);
                     break;
                 case FADEUP:
+                    Log.v(LOGTAG, "FADEUP");
                     mCurrentVolume += .01f;
                     if (mCurrentVolume < 1.0f) {
                         mMediaplayerHandler.sendEmptyMessageDelayed(FADEUP, 10);
@@ -187,7 +189,12 @@ public class MediaPlaybackService extends Service {
                         openCurrent();
                     }
                     break;
-                case TRACK_ENDED:
+                case TRACK_ENDED:  //当前歌曲播完成，这里需要改动。
+                    Log.v("Debug", "TRACK_ENDED");
+                    if(mSleepMode.timeToDream()){
+                    	mSleepMode.handlePause();
+                    	break;
+                    }
                     if (mRepeatMode == REPEAT_CURRENT) {
                         seek(0);
                         play();
@@ -237,7 +244,9 @@ public class MediaPlaybackService extends Service {
                             Log.e(LOGTAG, "Unknown audio focus change code");
                     }
                     break;
-
+                case SLEEP_TIME:
+                	mSleepMode.timeUp();
+                	break;
                 default:
                     break;
             }
@@ -303,6 +312,9 @@ public class MediaPlaybackService extends Service {
         mPlayer = new MultiPlayer();
         mPlayer.setHandler(mMediaplayerHandler);
 
+        //init sleepmode here
+        mSleepMode = new SleepMode();
+        
         reloadQueue();
         
         IntentFilter commandFilter = new IntentFilter();
@@ -582,6 +594,7 @@ public class MediaPlaybackService extends Service {
     
     @Override
     public IBinder onBind(Intent intent) {
+        Log.v(LOGTAG,"onBind :"+intent.getComponent().getClassName());
         mDelayedStopHandler.removeCallbacksAndMessages(null);
         mServiceInUse = true;
         return mBinder;
@@ -1732,6 +1745,26 @@ public class MediaPlaybackService extends Service {
             return mPlayer.getAudioSessionId();
         }
     }
+    
+     public boolean isInSleepMode() throws RemoteException {
+            return mSleepMode.mIsActivated;
+     }
+
+     public long getSleepModeRemainingTime() throws RemoteException {
+         return mSleepMode.getRemainingTime();
+     }
+
+     public void activateSleepMode(long time ,boolean imme) throws RemoteException {
+         //Toast.makeText(this, "activateSleepMode", 1500);
+    	 if(time >0)
+    		 mSleepMode.activateSleepMode(time,imme);
+     }
+
+     public void inactivateSleepMode() throws RemoteException {
+         //Toast.makeText(this, "inactivateSleepMode", 1500);
+         mSleepMode.inactivateSleepMode();
+     }
+    
 
     /**
      * Provides a unified interface for dealing with midi files and
@@ -1871,7 +1904,7 @@ public class MediaPlaybackService extends Service {
      * has a remote reference to the stub.
      */
     static class ServiceStub extends IMediaPlaybackService.Stub {
-        WeakReference<MediaPlaybackService> mService;
+        WeakReference<MediaPlaybackService> mService; //不怕空指针吗？
         
         ServiceStub(MediaPlaybackService service) {
             mService = new WeakReference<MediaPlaybackService>(service);
@@ -1971,6 +2004,22 @@ public class MediaPlaybackService extends Service {
         public int getAudioSessionId() {
             return mService.get().getAudioSessionId();
         }
+
+        public boolean isInSleepMode() throws RemoteException {
+            return mService.get().isInSleepMode();
+        }
+
+        public long getSleepModeRemainingTime() throws RemoteException {
+            return mService.get().getSleepModeRemainingTime();
+        }
+
+        public void activateSleepMode(long time,boolean imme) throws RemoteException {
+            mService.get().activateSleepMode(time,imme);
+        }
+
+        public void inactivateSleepMode() throws RemoteException {
+            mService.get().inactivateSleepMode();
+        }
     }
 
     @Override
@@ -1988,4 +2037,61 @@ public class MediaPlaybackService extends Service {
     }
 
     private final IBinder mBinder = new ServiceStub(this);
+    
+    private final class SleepMode{
+        private boolean mWaitForEnd = true;  //FIXME  起个好点的名字
+        private boolean mIsActivated ;
+        private long mRemainingTime;
+        private long mStartMonent;
+        /**
+         * 激活睡眠模式
+         * @param time 
+         */
+        private void activateSleepMode(long time,boolean imme){
+            if(mIsActivated)
+                return;
+            Log.v("SleepMode", "activateSleepMode");
+            mRemainingTime = time;
+            mWaitForEnd = imme;
+            mIsActivated = true;
+            mStartMonent = System.currentTimeMillis();
+            mMediaplayerHandler.sendEmptyMessageDelayed(SLEEP_TIME, mRemainingTime);
+            
+        }
+        
+        private void inactivateSleepMode(){
+            Log.v("SleepMode", "inactivateSleepMode");
+            mIsActivated = false;
+            mMediaplayerHandler.removeMessages(SLEEP_TIME);
+            
+        }
+        
+        private long getRemainingTime(){
+        	if(mRemainingTime==0)
+        		return mRemainingTime;
+        	return  mRemainingTime + mStartMonent - System.currentTimeMillis() ;
+        }
+
+        private void timeUp(){
+            if(mIsActivated){
+                    if(!mWaitForEnd){
+                        Log.v(LOGTAG, "SleepMode pause");
+                        handlePause();
+                    }else{
+                    	mRemainingTime =0;
+                        Log.v(LOGTAG, "SleepMode Hold");
+                    }
+                }
+        }
+        
+        private void handlePause(){
+        	mIsActivated = false;
+            pause();
+        }
+        
+        boolean timeToDream(){
+            return mRemainingTime <= 0 && mIsActivated;
+        }
+        
+    }
 }

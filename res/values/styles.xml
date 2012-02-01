@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="SleepModeButton">
+    <item name="android:textStyle">bold</item>
+    <item name="android:gravity">center</item>
+    <item name="android:textColor">#88363636</item>
+    <item name="android:textSize">20dip</item>
+  </style>   
+</resources>

@@ -87,6 +87,7 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
         super.onCreate(icicle);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        //让音量键在这个activity中调整的是媒体音量
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         if (icicle != null) {
             mCurrentAlbumId = icicle.getString("selectedalbum");

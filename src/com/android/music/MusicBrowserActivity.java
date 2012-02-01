@@ -22,10 +22,18 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
+/**
+ * MusicBrowserActivity是应用从launcher的入口，启动的时候会切换到具体的Tab里，
+ * 
+ */
 public class MusicBrowserActivity extends Activity
     implements MusicUtils.Defs {
 
@@ -54,7 +62,7 @@ public class MusicBrowserActivity extends Activity
             mToken = MusicUtils.bindToService(this, autoshuffle);
         }
     }
-
+    
     @Override
     public void onDestroy() {
         if (mToken != null) {

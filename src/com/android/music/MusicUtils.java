@@ -198,7 +198,9 @@ public class MusicUtils {
             sService = null;
         }
     }
-
+    /**
+     * 封装了一下ServiceConnection，用来生成接口和initAlbumArtCache。不知道为什么这样做
+     */
     private static class ServiceBinder implements ServiceConnection {
         ServiceConnection mCallback;
         ServiceBinder(ServiceConnection callback) {
@@ -1228,6 +1230,7 @@ public class MusicUtils {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         a.startActivity(intent);
         a.finish();
+        //取消切换动画
         a.overridePendingTransition(0, 0);
     }
     
@@ -1280,7 +1283,12 @@ public class MusicUtils {
         int bheight = bm.getHeight();
         float scalex = (float) vwidth / bwidth;
         float scaley = (float) vheight / bheight;
-        float scale = Math.max(scalex, scaley) * 1.3f;
+        float scale = Math.max(scalex, scaley) * 1.3f;   
+        
+        //1.3f ?=   b'/b= (a*sin_n+b*cos_n)/b=a/b*sin_n+ cos_n ; n = PI/18 , a>=b
+        // 当a > 2b , 1.3f便太小了 , 当专辑的长边大于短边两倍以上时应该用下面式子 ，效率差别不大吧
+        //float scale = Math.max(scalex, scaley) * 
+        //             (Math.max(bheight, bwidth) / Math.min(bheight, bwidth)*0.174f+0.985f);
 
         Bitmap.Config config = Bitmap.Config.ARGB_8888;
         Bitmap bg = Bitmap.createBitmap(vwidth, vheight, config);
@@ -1297,13 +1305,14 @@ public class MusicUtils {
         paint.setColorFilter(filter);
         Matrix matrix = new Matrix();
         matrix.setTranslate(-bwidth/2, -bheight/2); // move bitmap center to origin
-        matrix.postRotate(10);
+        matrix.postRotate(10);    //   rotate
         matrix.postScale(scale, scale);
         matrix.postTranslate(vwidth/2, vheight/2);  // Move bitmap center to view center
         c.drawBitmap(bm, matrix, paint);
         v.setBackgroundDrawable(new BitmapDrawable(bg));
     }
-
+    
+    
     static int getCardId(Context context) {
         ContentResolver res = context.getContentResolver();
         Cursor c = res.query(Uri.parse("content://media/external/fs_id"), null, null, null, null);

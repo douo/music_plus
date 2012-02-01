@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sleep_mode_long_press_hint">长按睡眠键可以直接激化睡眠模式</string>
+    <string name="sleep_mode_active">睡眠模式开启</string>
+    <string name="sleep_mode_inactive">睡眠模式关闭</string>
+    <string name="sleep_mode_dialog_title">睡眠模式</string>
+    <string name="sleep_mode_checkbox_label">等待歌曲播完再暂停？</string>
+    
+</resources>

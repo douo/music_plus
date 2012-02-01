@@ -27,6 +27,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
 
+    <!--taskAffinity http://winuxxan.blog.51cto.com/2779763/504835-->
     <application android:icon="@drawable/app_music"
         android:label="@string/musicbrowserlabel"
         android:taskAffinity="android.task.music"
@@ -63,6 +64,7 @@
              to it we want it back in its initial state.  We exclude from
              recents since this is accessible through a notification when
              appropriate. -->
+        <!-- 关于launchmode见http://winuxxan.blog.51cto.com/2779763/504047-->
         <activity android:name="com.android.music.MediaPlaybackActivity"
                 android:theme="@android:style/Theme.NoTitleBar"
                 android:label="@string/mediaplaybacklabel"
@@ -178,6 +180,7 @@
                 <data android:mimeType="vnd.android.cursor.dir/playlist"/>
             </intent-filter>
         </activity>
+        
         <activity-alias android:name="com.android.music.PlaylistShortcutActivity"
             android:targetActivity="com.android.music.PlaylistBrowserActivity"
             android:label="@string/musicshortcutlabel"

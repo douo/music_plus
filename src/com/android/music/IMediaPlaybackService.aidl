@@ -52,5 +52,10 @@ interface IMediaPlaybackService
     int getRepeatMode();
     int getMediaMountedCount();
     int getAudioSessionId();
+    // sleep mode interface begin
+    boolean isInSleepMode();
+    long getSleepModeRemainingTime();
+    void activateSleepMode(long time,boolean imme);
+    void inactivateSleepMode();
 }
 

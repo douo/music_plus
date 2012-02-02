@@ -6,14 +6,9 @@ import info.dourok.android.demo.lyrics.Lyrics.LyricsItemNode;
 import java.util.ArrayList;
 
 import android.content.Context;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.os.Handler;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -49,8 +44,8 @@ public class LyricsView extends View {
 	protected void onLayout(boolean changed, int left, int top, int right,
 			int bottom) {
 		if (changed) {// FIXME 找到真正宽高确定的地方 XXX
-			LyricsDemoActivity.setBackground(this, BitmapFactory
-					.decodeResource(getResources(), R.drawable.ic_launcher));
+//			LyricsDemoActivity.setBackground(this, BitmapFactory
+//					.decodeResource(getResources(), R.drawable.album_border_large));
 			mLinesBefore = (int) (getHeight() * mCurLinePosition / getLineHeight());
 			mLinesAfter = (int) (getHeight() * (1 - mCurLinePosition)
 					/ getLineHeight() + 1);

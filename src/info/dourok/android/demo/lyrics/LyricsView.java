@@ -10,14 +10,17 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
 public class LyricsView extends View {
-	public interface onPositionChangeListener {
+	public static interface PositionChangeListener {
 
-		void onPositionChanged(LyricsView lyricsView, int progress,
+		void onPositionChanged(LyricsView lyricsView, float differ,
 				boolean fromUser);
 
 		void onStartTouch(LyricsView lyricsView);
@@ -45,21 +48,19 @@ public class LyricsView extends View {
 	@Override
 	protected void onLayout(boolean changed, int left, int top, int right,
 			int bottom) {
-		/*if (changed) {// FIXME 找到真正宽高确定的地方 XXX
+		if (changed) {// FIXME 找到真正宽高确定的地方 XXX
 			LyricsDemoActivity.setBackground(this, BitmapFactory
 					.decodeResource(getResources(), R.drawable.ic_launcher));
 			mLinesBefore = (int) (getHeight() * mCurLinePosition / getLineHeight());
 			mLinesAfter = (int) (getHeight() * (1 - mCurLinePosition)
 					/ getLineHeight() + 1);
-		}*/
+		}
 	}
 
 	@Override
 	protected void onDraw(Canvas canvas) {
 		canvas.save();
-
-		canvas.translate(getPaddingLeft(), 0);
-
+		canvas.translate(getPaddingLeft(), offsety);
 		float startHeight = -getCurOffset();
 		// 预处理 得到边框内的index上下限
 		int s = (mCurLyricsItemIndex < 0 ? 0 : mCurLyricsItemIndex) - 1;
@@ -85,10 +86,8 @@ public class LyricsView extends View {
 			if (i == mCurLyricsItemIndex) {
 				p = mCurPaint;
 			}
-
 			startHeight = drawLyricsItem(mLyricsItems.get(i), p, canvas,
 					startHeight);
-
 		}
 		canvas.drawLine(0, getContentHeight() * mCurLinePosition,
 				getContentWidth(), getContentHeight() * mCurLinePosition,
@@ -105,7 +104,7 @@ public class LyricsView extends View {
 	 */
 	private int mLinesBefore;
 	private int mLinesAfter;
-
+	private PositionChangeListener positionChangeListener;
 	private Lyrics mLyrics;
 	private ArrayList<LyricsItem> mLyricsItems;
 	private int mCurLyricsItemIndex;
@@ -123,13 +122,16 @@ public class LyricsView extends View {
 	 * 唯一更改画笔的地方
 	 */
 	private void initPaint() {
+		float size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+				18f, getContext().getResources().getDisplayMetrics());
 
 		mNormalPaint = new Paint();
-		mNormalPaint.setTextSize(18f);
+		mNormalPaint.setTextSize(size);
 		mNormalPaint.setColor(0xffffffff);
 		mNormalPaint.setAntiAlias(true);
 		mCurPaint = new Paint();
-		mCurPaint.setTextSize(18f);
+
+		mCurPaint.setTextSize(size);
 		mCurPaint.setColor(0xfff00000);
 		mCurPaint.setAntiAlias(true);
 		fontHeight = mNormalPaint.getFontMetricsInt(null);
@@ -153,11 +155,11 @@ public class LyricsView extends View {
 		return mLyrics;
 	}
 
-	public float getContentWidth() {
+	private float getContentWidth() {
 		return getWidth() - getPaddingLeft() - getPaddingRight();
 	}
 
-	public float getContentHeight() {
+	private float getContentHeight() {
 		return getHeight() /*- getPaddingTop() - getPaddingBottom() padding on heigh alway ignores*/;
 	}
 
@@ -233,7 +235,7 @@ public class LyricsView extends View {
 	 * 
 	 * @param time
 	 */
-	private void updateCurLyricsItemIndex(int time) {
+	public void updateCurLyricsItemIndex(int time) {
 		this.mCurTime = time;
 		if (mLyrics.isHasTimestamp()) {
 			if (time > mLyricsItems.get(mCurLyricsItemIndex).mTime) {
@@ -272,7 +274,7 @@ public class LyricsView extends View {
 			int time1 = mLyricsItems.get(mCurLyricsItemIndex).mTime;
 			int time2;
 			if (mCurLyricsItemIndex + 1 == mLyricsItems.size()) {
-				time2 = getTotalTime() > time1 ? getTotalTime() : time1/*不会发生*/;
+				time2 = getTotalTime() > time1 ? getTotalTime() : time1/* 不会发生 */;
 			} else {
 				time2 = mLyricsItems.get(mCurLyricsItemIndex + 1).mTime;
 			}
@@ -291,8 +293,8 @@ public class LyricsView extends View {
 		if (mLyrics.isHasTimestamp()) {
 			int time1 = mLyricsItems.get(mCurLyricsItemIndex).mTime;
 			int diff = getCurTimeDiffer();
-			diff= diff==0?1:diff;  // 避免0除
-			return 1.0f*getLineHeight()
+			diff = diff == 0 ? 1 : diff; // 避免0除
+			return 1.0f * getLineHeight()
 					* mLyricsItems.get(mCurLyricsItemIndex).mNodeLenght
 					* (mCurTime - time1) / (diff);
 		} else {
@@ -307,45 +309,60 @@ public class LyricsView extends View {
 		return mLineHeight;
 	}
 
-	
-	// *****TEST*********//
-	private static final int REFRESH_LYRICS_POSITION = 1;
+	private float spx, spy;
+	private float cpx, cpy;
+	private float offsety = 0;
 
-	private Handler mHandler = new Handler() {
-		public void handleMessage(android.os.Message msg) {
-			switch (msg.what) {
-			case REFRESH_LYRICS_POSITION:
-				updateCurLyricsItemIndex(getTime());
-				// System.out.println(mCurLyricsItemIndex);
-				invalidate();
-				mHandler.sendEmptyMessageDelayed(REFRESH_LYRICS_POSITION, 20L);
-			}
+	private void motionMove(float x, float y) {
+		float dy = y - cpy;
+		if (positionChangeListener != null) {
+			positionChangeListener.onPositionChanged(this, dy, true);
+		}
+		offsety += (y - cpy);
+		cpx = x;
+		cpy = y;
 
-		};
-	};
-
-	private long stime;
-
-	private int getTime() {
-		return (int) (System.currentTimeMillis() - stime) * 10;
+		System.out.println("offsety : "+offsety);
 	}
 
-	private int getTotalTime() {
-		return 5 * 60 * 1000;
+	private void motionStart(float x, float y) {
+		spx = x;
+		spy = y;
+		cpx = spx;
+		cpy = spy;
+		if (positionChangeListener != null) {
+			positionChangeListener.onStartTouch(this);
+		}
+	}
+
+	private void motionStop(float x, float y) {
+		if (positionChangeListener != null) {
+			positionChangeListener.onStopTouch(this);
+		}
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		// TODO Auto-generated method stub
-		if (event.getAction() == MotionEvent.ACTION_UP) {
-			if (stime == 0) {
-				stime = System.currentTimeMillis();
-				mHandler.sendEmptyMessage(REFRESH_LYRICS_POSITION);
-			} else {
-				mHandler.removeMessages(REFRESH_LYRICS_POSITION);
-				stime = 0;
-			}
+		
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+			motionStart(event.getX(), event.getY());
+			break;
+		case MotionEvent.ACTION_MOVE:
+			motionMove(event.getX(), event.getY());
+			break;
+
+		case MotionEvent.ACTION_UP:
+			motionStop(event.getX(), event.getY());
+			break;
+		default:
+			break;
 		}
 		return true;
 	}
+	private int getTotalTime() {
+ 		return 5 * 60 * 1000;
+ 	}
+	
+
 }

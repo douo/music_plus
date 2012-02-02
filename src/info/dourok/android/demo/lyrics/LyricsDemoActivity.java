@@ -14,7 +14,9 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.DisplayMetrics;
+import android.view.KeyEvent;
 import android.view.View;
 
 public class LyricsDemoActivity extends Activity {
@@ -40,6 +42,7 @@ public class LyricsDemoActivity extends Activity {
 			e.printStackTrace();
 		}
         setContentView(lyricsView);
+        
     }
     
     
@@ -83,7 +86,50 @@ public class LyricsDemoActivity extends Activity {
         matrix.postTranslate(vwidth/2, vheight/2);  // Move bitmap center to view center
         c.drawBitmap(bm, matrix, paint);
         v.setBackgroundDrawable(new BitmapDrawable(bg));
+        
     }
     
+ // *****TEST*********//
+ 	private static final int REFRESH_LYRICS_POSITION = 1;
+
+ 	private Handler mHandler = new Handler() {
+ 		public void handleMessage(android.os.Message msg) {
+ 			switch (msg.what) {
+ 			case REFRESH_LYRICS_POSITION:
+ 				lyricsView.updateCurLyricsItemIndex(getTime());
+ 				// System.out.println(mCurLyricsItemIndex);
+ 				lyricsView.invalidate();
+ 				mHandler.sendEmptyMessageDelayed(REFRESH_LYRICS_POSITION, 20L);
+ 			}
+
+ 		};
+ 	};
+
+ 	private long stime;
+
+ 	private int getTime() {
+ 		return (int) (System.currentTimeMillis() - stime) * 10;
+ 	}
+
+ 	
+ 		@Override
+ 		public boolean onKeyUp(int keyCode, KeyEvent event) {
+ 			// TODO Auto-generated method stub
+ 			System.out.println("onkeyup");
+ 			return super.onKeyUp(keyCode, event);
+ 		}
+ 	@Override
+ 	public boolean onKeyDown(int keyCode, KeyEvent event) {
+ 		super.onKeyDown(keyCode, event);
+ 		System.out.println(keyCode);
+ 		if (stime == 0) {
+ 			stime = System.currentTimeMillis();
+ 			mHandler.sendEmptyMessage(REFRESH_LYRICS_POSITION);
+ 		} else {
+ 			mHandler.removeMessages(REFRESH_LYRICS_POSITION);
+ 			stime = 0;
+ 		}
+ 		return true;
+ 	}
     
 }

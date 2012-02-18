@@ -1,47 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="fill_parent" >
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	      android:orientation="vertical"
-	      android:layout_gravity="center_horizontal"
-	      android:layout_width="wrap_content"
-	      android:layout_height="fill_parent"
-	      android:padding="5dip"
-	      >
-  <LinearLayout 
-      android:orientation="horizontal"
-      android:layout_gravity="center_horizontal"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content">
-    <!-- hour -->
-    <NumberPicker
-	android:id="@+id/hour"
-	android:layout_width="70dip"
-	android:layout_height="wrap_content"
-	android:focusable="true"
-	android:focusableInTouchMode="true"
-        />
-    <TextView
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="fill_parent"
-        android:gravity="center"
-        android:textStyle="bold"
-        android:textSize="24dp"
-        android:text=":"
-        />
-    <!-- minute -->
-    <NumberPicker
-        android:id="@+id/minute"
-        android:layout_width="70dip"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="5dip"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        />
-  </LinearLayout>
-  <CheckBox
-      android:id="@+id/imme"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:text="@string/sleep_mode_checkbox_label"
-      />
-</LinearLayout>
+        android:layout_gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="5dip" >
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal" >
+
+            <!-- hour -->
+
+            <NumberPicker
+                android:id="@+id/hour"
+                android:layout_width="70dip"
+                android:layout_height="wrap_content"
+                android:focusable="true"
+                android:focusableInTouchMode="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:gravity="center"
+                android:text=":"
+                android:textSize="24dp"
+                android:textStyle="bold" />
+            <!-- minute -->
+
+            <NumberPicker
+                android:id="@+id/minute"
+                android:layout_width="70dip"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dip"
+                android:focusable="true"
+                android:focusableInTouchMode="true" />
+        </LinearLayout>
+
+        <CheckBox
+            android:id="@+id/imme"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sleep_mode_checkbox_label" />
+    </LinearLayout>
+
+</ScrollView>

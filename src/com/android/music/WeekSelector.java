@@ -16,6 +16,7 @@
 
 package com.android.music;
 
+import info.dourok.musicp.R;
 import android.app.Activity;
 import android.media.AudioManager;
 import android.os.Bundle;

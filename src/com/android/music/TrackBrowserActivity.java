@@ -62,6 +62,10 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
+import info.dourok.android.lyrics.LyricsResultListActivity;
+import info.dourok.android.lyrics.MiscUtils;
+import info.dourok.musicp.R;
+
 import java.text.Collator;
 import java.util.Arrays;
 
@@ -653,6 +657,7 @@ public class TrackBrowserActivity extends ListActivity
             menu.add(0, REMOVE, 0, R.string.remove_from_playlist);
         }
         menu.add(0, USE_AS_RINGTONE, 0, R.string.ringtone_menu);
+        menu.add(0,SEARCH_LYRIC,0,R.string.search_lyric);
         menu.add(0, DELETE_ITEM, 0, R.string.delete_item);
         AdapterContextMenuInfo mi = (AdapterContextMenuInfo) menuInfoIn;
         mSelectedPosition =  mi.position;
@@ -711,6 +716,13 @@ public class TrackBrowserActivity extends ListActivity
                 // Set the system setting to make this the current ringtone
                 MusicUtils.setRingtone(this, mSelectedId);
                 return true;
+               
+            case SEARCH_LYRIC:
+            	Intent i = new Intent(this, LyricsResultListActivity.class);
+    			i.putExtra(LyricsResultListActivity.KEY_SONGWRAPPER,
+    					MusicUtils.toSongWrapper(this, mSelectedId));
+    			startActivity(i);
+    			return true;
 
             case DELETE_ITEM: {
                 long [] list = new long[1];

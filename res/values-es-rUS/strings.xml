@@ -130,7 +130,7 @@
     <string name="weekpicker_title" msgid="699535378922101701">"Establecer hora"</string>
     <string name="save_as_playlist" msgid="5180413608901885255">"Guardar como lista de reproducción"</string>
     <string name="clear_playlist" msgid="4565515100924905315">"Borrar lista de reproducción"</string>
-    <string name="musicbrowserlabel" msgid="3162022214114562892">"Música"</string>
+    <string name="musicbrowserlabel" msgid="3162022214114562892">"Música+"</string>
     <string name="musicshortcutlabel" msgid="2602980193508150226">"Lista de reproducción de música"</string>
     <string name="mediaplaybacklabel" msgid="6733604841530940397">"Música"</string>
     <string name="videobrowserlabel" msgid="8522326678447494657">"Videos"</string>

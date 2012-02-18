@@ -130,7 +130,7 @@
     <string name="weekpicker_title" msgid="699535378922101701">"تعيين الوقت"</string>
     <string name="save_as_playlist" msgid="5180413608901885255">"حفظ كقائمة تشغيل"</string>
     <string name="clear_playlist" msgid="4565515100924905315">"محو قائمة التشغيل"</string>
-    <string name="musicbrowserlabel" msgid="3162022214114562892">"موسيقى"</string>
+    <string name="musicbrowserlabel" msgid="3162022214114562892">"موسيقى+"</string>
     <string name="musicshortcutlabel" msgid="2602980193508150226">"قائمة تشغيل الموسيقى"</string>
     <string name="mediaplaybacklabel" msgid="6733604841530940397">"موسيقى"</string>
     <string name="videobrowserlabel" msgid="8522326678447494657">"مقاطع الفيديو"</string>

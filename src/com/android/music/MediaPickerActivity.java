@@ -34,6 +34,8 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
+import info.dourok.musicp.R;
+
 import java.util.ArrayList;
 
 public class MediaPickerActivity extends ListActivity implements MusicUtils.Defs

@@ -254,7 +254,7 @@
     <string name="clear_playlist">Clear playlist</string>
 
     <!-- Activity label. This might show up in the activity-picker -->
-    <string name="musicbrowserlabel">Music</string>
+    <string name="musicbrowserlabel">Music+</string>
     <!-- Activity label. This might show up in the activity-picker -->
     <string name="musicshortcutlabel">Music playlist</string>
     <!-- Activity label. This might show up in the activity-picker -->
@@ -319,5 +319,6 @@
 
     <!-- Menu text for the item controlling the audio effects panel [CHAR LIMIT=15] -->
     <string name="effectspanel">Sound effects</string>
+    <string name="search_lyric">Search Lyric</string>
 </resources>
 

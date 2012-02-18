@@ -45,6 +45,8 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
+import info.dourok.musicp.R;
+
 import java.io.IOException;
 import java.text.Collator;
 import java.util.Formatter;

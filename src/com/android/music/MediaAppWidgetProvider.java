@@ -16,6 +16,7 @@
 
 package com.android.music;
 
+import info.dourok.musicp.R;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;

@@ -130,7 +130,7 @@
     <string name="weekpicker_title" msgid="699535378922101701">"设置时间"</string>
     <string name="save_as_playlist" msgid="5180413608901885255">"另存为播放列表"</string>
     <string name="clear_playlist" msgid="4565515100924905315">"清除播放列表"</string>
-    <string name="musicbrowserlabel" msgid="3162022214114562892">"音乐"</string>
+    <string name="musicbrowserlabel" msgid="3162022214114562892">"音乐+"</string>
     <string name="musicshortcutlabel" msgid="2602980193508150226">"音乐播放列表"</string>
     <string name="mediaplaybacklabel" msgid="6733604841530940397">"音乐"</string>
     <string name="videobrowserlabel" msgid="8522326678447494657">"视频"</string>
@@ -156,4 +156,5 @@
     <string name="fast_scroll_alphabet" msgid="5548732936480723311">" ABCDEFGHIJKLMNOPQRSTUVWXYZ"</string>
     <string name="widget_initial_text" msgid="6334545155963910952">"轻触以选择音乐。"</string>
     <string name="effectspanel" msgid="8804547581593509614">"音效"</string>
+     <string name="search_lyric">搜索歌词</string>
 </resources>

@@ -42,17 +42,17 @@
        <ImageButton android:id="@+id/shuffle"
             android:layout_width="62dip"
             android:layout_height="40dip"
-            android:layout_marginLeft="15dip" />
+            android:layout_marginLeft="12dip" />
 
        <ImageButton android:id="@+id/repeat"
             android:layout_width="62dip"
-            android:layout_height="40dip"
-            android:layout_marginLeft="15dip" />
+            android:layout_height="40dip" 
+            android:layout_marginLeft="12dip" />
             
        <Button android:id="@+id/sleepmode"
             android:layout_width="62dip"
             android:layout_height="40dip"
-            android:layout_marginTop="15dip"
+          	android:layout_marginLeft="12dip"
             style="@style/SleepModeButton" />
     </LinearLayout>
 

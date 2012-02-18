@@ -28,6 +28,8 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import info.dourok.musicp.R;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 /**

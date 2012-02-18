@@ -54,6 +54,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
+import info.dourok.musicp.R;
+
 import java.text.Collator;
 import java.util.ArrayList;
 

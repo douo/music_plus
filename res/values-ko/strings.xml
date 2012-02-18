@@ -130,7 +130,7 @@
     <string name="weekpicker_title" msgid="699535378922101701">"시간 설정"</string>
     <string name="save_as_playlist" msgid="5180413608901885255">"재생 목록으로 저장"</string>
     <string name="clear_playlist" msgid="4565515100924905315">"재생 목록 지우기"</string>
-    <string name="musicbrowserlabel" msgid="3162022214114562892">"음악"</string>
+    <string name="musicbrowserlabel" msgid="3162022214114562892">"음악+"</string>
     <string name="musicshortcutlabel" msgid="2602980193508150226">"음악 재생 목록"</string>
     <string name="mediaplaybacklabel" msgid="6733604841530940397">"음악"</string>
     <string name="videobrowserlabel" msgid="8522326678447494657">"동영상"</string>

@@ -16,6 +16,8 @@
 
 package com.android.music;
 
+import info.dourok.musicp.R;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -85,8 +87,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private boolean mDeviceHasDpad;
     private long mStartSeekPos = 0;
     private long mLastSeekEventTime;
-    private IMediaPlaybackService mService = null;
     private RepeatingImageButton mPrevButton;
+    private IMediaPlaybackService mService = null;
     private ImageButton mPauseButton;
     private RepeatingImageButton mNextButton;
     private ImageButton mRepeatButton;
@@ -128,6 +130,15 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         mTotalTime = (TextView) findViewById(R.id.totaltime);
         mProgress = (ProgressBar) findViewById(android.R.id.progress);
         mAlbum = (ImageView) findViewById(R.id.album);
+        mAlbum.setOnClickListener(new View.OnClickListener() { ///XXX FUCKING lazy
+			
+			@Override
+			public void onClick(View v) {
+				Intent i =  new Intent(MediaPlaybackActivity.this,LyricsShowActivity.class);
+				startActivity(i);
+				
+			}
+		});
         mArtistName = (TextView) findViewById(R.id.artistname);
         mAlbumName = (TextView) findViewById(R.id.albumname);
         mTrackName = (TextView) findViewById(R.id.trackname);

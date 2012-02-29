@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="sleep_time_label">
+        <item>"Never"</item>
+        <item>"15 Minutes"</item>
+        <item>"30 Minutes"</item>
+        <item>"1 Hour"</item>
+        <item>"2 Hours"</item>
+        <item>"4 Hours"</item>
+    </string-array>
     <string name="sleep_mode_long_press_hint">Long press the Button could active Sleep Mode with current time.</string>
     <string name="sleep_mode_active">sleep mode activate</string>
     <string name="sleep_mode_inactive">sleep mode inactive</string>
-    <string name="sleep_mode_dialog_title">Sleep Mode</string>
-    <string name="sleep_mode_checkbox_label">Wait for the current song to end?</string>
-    
+    <string name="sleep_mode_dialog_title">Pick a Time</string>
+    <string name="sleep_mode_checkbox_label">until the song finishes</string>
+    <string name="search_lyric">Search Lyric</string>	
 </resources>

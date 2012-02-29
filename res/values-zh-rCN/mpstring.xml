@@ -4,6 +4,6 @@
     <string name="sleep_mode_active">睡眠模式开启</string>
     <string name="sleep_mode_inactive">睡眠模式关闭</string>
     <string name="sleep_mode_dialog_title">睡眠模式</string>
-    <string name="sleep_mode_checkbox_label">等待歌曲播完再暂停？</string>
-    
+    <string name="sleep_mode_checkbox_label">等待歌曲播完？</string>
+      <string name="search_lyric">搜索歌词</string>
 </resources>

@@ -2147,7 +2147,7 @@ public class MediaPlaybackService extends Service {
 	private final IBinder mBinder = new ServiceStub(this);
 
 	private final class SleepMode {
-		private boolean mWaitForEnd = true; // FIXME 起个好点的名字
+		private boolean mWait = true; // FIXME 起个好点的名字
 		private boolean mIsActivated;
 		private long mRemainingTime;
 		private long mStartMonent;
@@ -2162,7 +2162,7 @@ public class MediaPlaybackService extends Service {
 				return;
 			Log.v("SleepMode", "activateSleepMode");
 			mRemainingTime = time;
-			mWaitForEnd = imme;
+			mWait = imme;
 			mIsActivated = true;
 			mStartMonent = System.currentTimeMillis();
 			mMediaplayerHandler.sendEmptyMessageDelayed(SLEEP_TIME,
@@ -2185,7 +2185,7 @@ public class MediaPlaybackService extends Service {
 
 		private void timeUp() {
 			if (mIsActivated) {
-				if (!mWaitForEnd) {
+				if (!mWait) {
 					Log.v(LOGTAG, "SleepMode pause");
 					handlePause();
 				} else {

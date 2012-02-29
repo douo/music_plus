@@ -1550,7 +1550,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
 	protected Dialog onCreateDialog(int id, Bundle args) {
 		switch (id) {
 		case SLEEPMODE_DIALOG_ID:
-			return new SleepModeDialog(this);
+			return new SleepModeDialog().getDialog();
 		default:
 			return null;
 		}
@@ -1561,19 +1561,72 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
 		super.onPrepareDialog(id, dialog, args);
 	}
 
-	private class SleepModeDialog extends AlertDialog implements
+	private class SleepModeDialog implements DialogInterface.OnClickListener {
+		AlertDialog mDialog;
+		int [] mTimesInMinute;
+		public SleepModeDialog() {
+			mTimesInMinute = getResources().getIntArray(R.array.sleep_time);
+			AlertDialog.Builder builder = new AlertDialog.Builder(
+					MediaPlaybackActivity.this);
+			builder.setTitle(R.string.sleep_mode_dialog_title);
+			builder.setItems(R.array.sleep_time_label, this);
+			
+			mDialog = builder.create();
+		}
+		public Dialog getDialog(){
+			return mDialog;
+		}
+		
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			if(which <mTimesInMinute.length){
+				if(which!=0){
+					long time = mTimesInMinute[which]*60*1000;
+					boolean wait = true;
+					if (mSleepTime != time || wait != mSleepModeBool) {
+						SharedPreferences settings = getSharedPreferences(
+								PREFS_NAME, 0);
+						SharedPreferences.Editor editor = settings.edit();
+						editor.putLong(SLEEP_TIME_PREFS, time);
+						editor.putBoolean(SLEEP_MODE_BOOL_PREFS, wait);
+						editor.commit();
+						if (mSleepTime == -1) { // first load
+							showToast(R.string.sleep_mode_long_press_hint);
+							mSleepTime = time;
+							mSleepModeBool = wait;
+							mSleepModeButton.setLongClickable(true);
+							activeSleepMode(false);
+						} else {
+							mSleepTime = time;
+							mSleepModeBool = wait;
+							activeSleepMode(true);
+						}
+					} else {
+						activeSleepMode(true);
+					}
+				}
+			}
+			
+		}
+	}
+
+	/**
+	 * @deprecated
+	 * @author Administrator
+	 * 
+	 */
+	private class SleepModeDialog2 extends AlertDialog implements
 			OnClickListener {
 		private Object mHourPicker;
 		private Object mMinutPicker;
 		private CheckBox mCheckBox;
-
 		private static final String HOUR = "hour";
 		private static final String MINUTE = "minute";
 
 		private int mHour;
 		private int mMinute;
 
-		public SleepModeDialog(Context context) {
+		public SleepModeDialog2(Context context) {
 			super(context);
 			setButton(context.getText(android.R.string.ok), this); // FIXME
 			setButton2(context.getText(android.R.string.cancel),
@@ -1657,7 +1710,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
 			state.putInt(MINUTE, mMinute);
 			return state;
 		}
-
+		
 		private void updateTime(int hour, int minute) {
 			try {
 				mSetCurrentMethod.invoke(mHourPicker, hour);

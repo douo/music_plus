@@ -5,5 +5,5 @@
     <string name="sleep_mode_inactive">睡眠模式關閉</string>
     <string name="sleep_mode_dialog_title">睡眠模式</string>
     <string name="sleep_mode_checkbox_label">等待歌曲播完再暫停？</string>
-    
+    <string name="search_lyric">搜尋歌詞</string>	    	
 </resources>

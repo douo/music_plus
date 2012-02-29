@@ -1,7 +1,5 @@
 package com.android.music;
 
-import java.io.IOException;
-
 import info.dourok.android.lyrics.Lyric;
 import info.dourok.android.lyrics.LyricsException;
 import info.dourok.android.lyrics.LyricsProvider.RawLyrics;
@@ -13,6 +11,9 @@ import info.dourok.android.lyrics.LyricsView;
 import info.dourok.android.lyrics.SongWrapper;
 import info.dourok.android.lyrics.UriSongWrapper;
 import info.dourok.musicp.R;
+
+import java.io.IOException;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -21,7 +22,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
-import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,7 +33,6 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;

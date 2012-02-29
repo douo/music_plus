@@ -40,6 +40,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -68,6 +69,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.HashMap;
@@ -709,7 +713,7 @@ public class MusicUtils {
 		String status = Environment.getExternalStorageState();
 		int title, message;
 
-		if (android.os.Environment.isExternalStorageRemovable()) {
+		if (isExternalStorageRemovable()) {
 			title = R.string.sdcard_error_title;
 			message = R.string.sdcard_error_message;
 		} else {
@@ -719,7 +723,7 @@ public class MusicUtils {
 
 		if (status.equals(Environment.MEDIA_SHARED)
 				|| status.equals(Environment.MEDIA_UNMOUNTED)) {
-			if (android.os.Environment.isExternalStorageRemovable()) {
+			if (isExternalStorageRemovable()) {
 				title = R.string.sdcard_busy_title;
 				message = R.string.sdcard_busy_message;
 			} else {
@@ -727,7 +731,7 @@ public class MusicUtils {
 				message = R.string.sdcard_busy_message_nosdcard;
 			}
 		} else if (status.equals(Environment.MEDIA_REMOVED)) {
-			if (android.os.Environment.isExternalStorageRemovable()) {
+			if (isExternalStorageRemovable()) {
 				title = R.string.sdcard_missing_title;
 				message = R.string.sdcard_missing_message;
 			} else {
@@ -1442,6 +1446,109 @@ public class MusicUtils {
 				((Exception) item).printStackTrace(out);
 			} else {
 				out.println(item);
+			}
+		}
+	}
+
+	// XXX fix for froyo
+	private static class ExternalStorageRemovableAgency {
+		Method method;
+
+		ExternalStorageRemovableAgency() {
+			Class<android.os.Environment> c = android.os.Environment.class;
+			try {
+				method = c.getMethod("isExternalStorageRemovable");
+			} catch (Exception e) {
+				Log.w("compatible warnning", e);
+				method = null;
+			}
+		}
+	}
+
+	private static ExternalStorageRemovableAgency sExternalStorageRemovableAgency = new ExternalStorageRemovableAgency();
+
+	static boolean isExternalStorageRemovable() {
+		try {
+			if (sExternalStorageRemovableAgency.method != null) {
+				return (Boolean) sExternalStorageRemovableAgency.method
+						.invoke(null);
+			}
+			// return android.os.Environment.isExternalStorageRemovable();
+		} catch (Exception e) {
+			Log.w("compatible warnning", e);
+		}
+		return true;
+	}
+
+	// XXX fix for froyo
+	static AudioEffectAgency AUDIOEFFECT_AGENCY = new AudioEffectAgency();
+
+	static class AudioEffectAgency {
+		Class<?> agency;
+		String ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL;
+		String EXTRA_AUDIO_SESSION;
+		String ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION;
+		String EXTRA_PACKAGE_NAME;
+		String ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION;
+
+		AudioEffectAgency() {
+			try {
+				agency = Class.forName("android.media.audiofx.AudioEffect");
+				Field f = agency
+						.getField("ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL");
+				ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL = (String) (f
+						.get(null));
+				f = agency.getField("EXTRA_AUDIO_SESSION");
+				EXTRA_AUDIO_SESSION = (String) (f.get(null));
+				f = agency.getField("ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION");
+				ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION = (String) (f
+						.get(null));
+				f = agency.getField("EXTRA_PACKAGE_NAME");
+				EXTRA_PACKAGE_NAME = (String) (f.get(null));
+				f = agency
+						.getField("ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION");
+				ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION = (String) (f
+						.get(null));
+			} catch (Exception e) {
+				agency = null;
+				Log.w("compatible warnning", e);
+			}
+		}
+
+		boolean isAavailable() {
+			return agency == null;
+		}
+	}
+	
+	// XXX fix for froyo
+	static AudioSessionIdAgency AUDIO_SESSION_ID_AGENCY = new AudioSessionIdAgency();
+	static class AudioSessionIdAgency {
+		Method set;
+		Method get;
+		public AudioSessionIdAgency() {
+			Class<MediaPlayer> c = MediaPlayer.class;
+			try {
+				set = c.getDeclaredMethod("setAudioSessionId", int.class);
+				get = c.getDeclaredMethod("getAudioSessionId");
+			} catch (Exception e) {
+				set = null;
+				get = null;
+				Log.w("compatible warnning", e);
+			}
+		}
+		void set(MediaPlayer p,int i){
+			try {
+				set.invoke(p, i);
+			} catch (Exception e) {
+				Log.w("compatible warnning", e);
+			}
+		}
+		int get(MediaPlayer p){
+			try {
+				return (Integer) get.invoke(p);
+			} catch (Exception e) {
+				Log.w("compatible warnning", e);
+				return 0;
 			}
 		}
 	}

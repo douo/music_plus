@@ -426,7 +426,7 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
                 if (mCurrentArtistId != null) {
                     list = MusicUtils.getSongListForArtist(this, Long.parseLong(mCurrentArtistId));
                     String f;
-                    if (android.os.Environment.isExternalStorageRemovable()) {
+                    if (MusicUtils.isExternalStorageRemovable()) {
                         f = getString(R.string.delete_artist_desc);
                     } else {
                         f = getString(R.string.delete_artist_desc_nosdcard);
@@ -435,7 +435,7 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
                 } else {
                     list = MusicUtils.getSongListForAlbum(this, Long.parseLong(mCurrentAlbumId));
                     String f;
-                    if (android.os.Environment.isExternalStorageRemovable()) {
+                    if (MusicUtils.isExternalStorageRemovable()) {
                         f = getString(R.string.delete_album_desc);
                     } else {
                         f = getString(R.string.delete_album_desc_nosdcard);

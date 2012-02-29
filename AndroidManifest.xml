@@ -104,7 +104,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="AudioPreview"
+            android:name="com.android.music.AudioPreview"
             android:excludeFromRecents="true"
             android:exported="true"
             android:taskAffinity=""
